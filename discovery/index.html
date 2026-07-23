@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flurolab VR - Laboratorio Discovery</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0e17; color: #fff; overflow: hidden; }
+        #panorama { width: 100vw; height: 100vh; }
+
+        .info-overlay {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 14, 23, 0.95);
+            border: 1px solid #00d4ff;
+            border-radius: 12px;
+            padding: 20px 28px;
+            max-width: 520px;
+            width: 90%;
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+        .info-overlay.active { display: block; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+        .info-overlay h3 { color: #00d4ff; font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .info-overlay p { color: #b0c4de; font-size: 0.9rem; line-height: 1.6; }
+        .info-overlay .close-btn {
+            position: absolute; top: 10px; right: 14px;
+            background: none; border: none; color: #ff6b6b; font-size: 1.4rem; cursor: pointer;
+        }
+        .info-overlay .tag {
+            display: inline-block; background: #00d4ff22; color: #00d4ff;
+            padding: 3px 12px; border-radius: 20px; font-size: 0.75rem; margin-top: 10px; margin-right: 5px;
+        }
+
+        .top-bar {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: rgba(10, 14, 23, 0.9); backdrop-filter: blur(10px);
+            padding: 12px 20px; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #1a2332;
+        }
+        .top-bar .logo { font-weight: 700; color: #00d4ff; font-size: 1.1rem; }
+        .top-bar .scene-name { color: #8899aa; font-size: 0.85rem; }
+        .top-bar .progress { display: flex; gap: 6px; }
+        .top-bar .dot { width: 8px; height: 8px; border-radius: 50%; background: #334455; transition: 0.3s; }
+        .top-bar .dot.active { background: #00d4ff; box-shadow: 0 0 8px #00d4ff; }
+
+        .nav-controls {
+            position: fixed; bottom: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 8px; z-index: 1000;
+        }
+        .nav-btn {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: rgba(10, 14, 23, 0.9); border: 1px solid #334455;
+            color: #fff; font-size: 1.2rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .nav-btn:hover { border-color: #00d4ff; color: #00d4ff; }
+
+        .scene-map {
+            position: fixed; top: 60px; left: 20px;
+            background: rgba(10, 14, 23, 0.9); backdrop-filter: blur(10px);
+            border: 1px solid #1a2332; border-radius: 10px;
+            padding: 12px; z-index: 1000; min-width: 220px;
+        }
+        .scene-map h4 { color: #00d4ff; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .scene-item {
+            padding: 6px 10px; border-radius: 6px; font-size: 0.8rem;
+            cursor: pointer; transition: 0.2s; color: #8899aa;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .scene-item:hover { background: #1a2332; color: #fff; }
+        .scene-item.active { background: #00d4ff22; color: #00d4ff; }
+        .scene-item .num { width: 18px; height: 18px; border-radius: 50%; background: #334455; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; }
+        .scene-item.active .num { background: #00d4ff; color: #0a0e17; }
+
+        .home-btn {
+            position: fixed; top: 60px; right: 20px; z-index: 1000;
+            background: rgba(10, 14, 23, 0.9); border: 1px solid #334455;
+            color: #fff; padding: 8px 16px; border-radius: 8px;
+            font-size: 0.8rem; cursor: pointer; text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+            transition: 0.2s;
+        }
+        .home-btn:hover { border-color: #00d4ff; color: #00d4ff; }
+
+        .custom-hotspot {
+            width: 36px; height: 36px;
+            background: rgba(0, 212, 255, 0.9);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #0a0e17;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+            transition: 0.2s;
+            animation: pulse 2s infinite;
+        }
+        .custom-hotspot:hover { transform: scale(1.2); box-shadow: 0 0 25px rgba(0, 212, 255, 0.8); animation: none; }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 15px rgba(0, 212, 255, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(0, 212, 255, 0.8); }
+        }
+
+        .nav-arrow-hotspot {
+            width: 50px; height: 50px;
+            background: rgba(0, 212, 255, 0.7);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+            transition: 0.2s;
+        }
+        .nav-arrow-hotspot:hover { transform: scale(1.15); background: rgba(0, 212, 255, 0.9); }
+
+        .pnlm-container { background: #0a0e17 !important; }
+
+        @media (max-width: 600px) {
+            .scene-map { display: none; }
+            .info-overlay { max-width: 95%; padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="logo">⚡ Laboratorio Discovery</div>
+        <div class="scene-name" id="sceneName">Entrada</div>
+        <div class="progress" id="progressDots">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <a href="../" class="home-btn">← Menú Principal</a>
+
+    <div class="scene-map">
+        <h4>Navegación</h4>
+        <div class="scene-item active" onclick="loadScene(0)">
+            <span class="num">1</span> Entrada
+        </div>
+        <div class="scene-item" onclick="loadScene(1)">
+            <span class="num">2</span> Discovery + Mesa
+        </div>
+        <div class="scene-item" onclick="loadScene(2)">
+            <span class="num">3</span> Comando Principal
+        </div>
+        <div class="scene-item" onclick="loadScene(3)">
+            <span class="num">4</span> Comando Lateral
+        </div>
+        <div class="scene-item" onclick="loadScene(4)">
+            <span class="num">5</span> Protección Radiológica
+        </div>
+    </div>
+
+    <div id="panorama"></div>
+
+    <div class="info-overlay" id="infoOverlay">
+        <button class="close-btn" onclick="closeInfo()">×</button>
+        <h3 id="infoTitle">🔍 Título</h3>
+        <p id="infoText">Contenido...</p>
+        <div id="infoTags"></div>
+    </div>
+
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevScene()" title="Anterior">←</button>
+        <button class="nav-btn" onclick="nextScene()" title="Siguiente">→</button>
+        <button class="nav-btn" onclick="toggleFullscreen()" title="Pantalla completa">⛶</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+    <script>
+        const scenes = [
+            {
+                name: "Entrada - Laboratorio Discovery",
+                panorama: "images/01_entrada.jpg",
+                yaw: 0,
+                pitch: 0,
+                hfov: 100,
+                hotspots: [
+                    {
+                        yaw: -80, pitch: -5,
+                        title: "🚪 Checklist de Ingreso",
+                        text: "Antes de entrar: verificar identidad del paciente, consentimiento informado, estudios previos, alergias a contraste, función renal (creatinina). Lavado de manos 3 minutos. Ropa quirúrgica sobre el plomo.",
+                        tags: ["Seguridad", "Checklist", "Obligatorio"]
+                    },
+                    {
+                        yaw: -40, pitch: -8,
+                        title: "💨 Zona de Anestesia y Torres",
+                        text: "Máquina de anestesia, torres de conexiones para gases medicinales (oxígeno, aire, vacío) y electricidad. Monitor multiparamétrico: ECG, SpO2, presión arterial, capnografía.",
+                        tags: ["Anestesia", "Gases", "Monitor"]
+                    },
+                    {
+                        yaw: 40, pitch: -10,
+                        title: "🧰 Gabinete de Materiales",
+                        text: "Catéteres (6F, 7F), guías (0.035\"), introductores, jeringas, solución salina, contraste no iónico. Verificar fechas de vencimiento antes de cada procedimiento.",
+                        tags: ["Materiales", "Inventario", "Seguridad"]
+                    },
+                    {
+                        yaw: 0, pitch: -15,
+                        title: "⚡ Discovery GE + Mesa",
+                        text: "Sala equipada con Discovery GE de piso. Mesa angiográfica centrada. 6 monitores en riel de techo. Mamparas de plomo colgadas. Área de parqueo del arco marcada en piso.",
+                        tags: ["Discovery GE", "Orientación", "Layout"]
+                    },
+                    {
+                        yaw: 10, pitch: -5,
+                        title: "🛡️ Mamparas de Plomo",
+                        text: "Mamparas de plomo colgadas de techo como protección radiológica adicional. Se desplazan según posición del arco. Complementan el blindaje móvil del tecnólogo.",
+                        tags: ["ALARA", "Protección", "Mamparas"]
+                    },
+                    {
+                        yaw: 0, pitch: -20,
+                        type: "nav",
+                        title: "→ Avanzar a Discovery + Mesa",
+                        text: "Navegar a centro de sala",
+                        targetScene: 1,
+                        cssClass: "nav-arrow-hotspot"
+                    }
+                ]
+            },
+            {
+                name: "Discovery GE + Mesa Angiográfica",
+                panorama: "images/02_discovery.jpg",
+                yaw: 0,
+                pitch: -5,
+                hfov: 100,
+                hotspots: [
+                    {
+                        yaw: -5, pitch: -12,
+                        title: "⚡ Discovery GE de Piso",
+                        text: "Angiografo Discovery GE en posición central regular. Proyecciones: AP, LAO (20°-90°), RAO (20°-90°), Cranial (10°-45°), Caudal (10°-45°). Arco desplazable en múltiples posiciones dentro de sala. Distancia foco-piel: 100cm.",
+                        tags: ["Discovery GE", "Proyecciones", "Posición"]
+                    },
+                    {
+                        yaw: 0, pitch: -18,
+                        title: "🛏️ Mesa Angiográfica",
+                        text: "Mesa angiográfica. Paciente posicionado supino. Blindaje móvil a 90cm del isocentro. Posición del tecnólogo: a 90° del haz primario, distancia > 1m del tubo. Manos fuera del campo directo.",
+                        tags: ["ALARA", "Distancia", "Blindaje"]
+                    },
+                    {
+                        yaw: -5, pitch: -25,
+                        title: "🎬 Pedales de Control",
+                        text: "Pedal izquierdo: fluoroscopia pulsada (baja dosis). Pedal derecho: grabación cine (15 fps). Pedal central: inyección de contraste (si conectado). NUNCA pisar ambos pedales simultáneamente.",
+                        tags: ["Pedales", "Fluoroscopia", "Cine"]
+                    },
+                    {
+                        yaw: 10, pitch: -8,
+                        title: "📺 6 Monitores en Riel de Techo",
+                        text: "Arriba (3): izquierda: adquisición tiempo real, centro: referencia (estudios previos), derecha: adquisición secundaria. Abajo (3): izquierda: postproceso, centro: postproceso secundario, derecha: replicación otra modalidad (ecografía, monitor multiparamétrico, etc).",
+                        tags: ["Monitores", "Adquisición", "Postproceso"]
+                    },
+                    {
+                        yaw: -50, pitch: -5,
+                        title: "🟡 Área de Parqueo del Arco",
+                        text: "Zona amarilla/negro en piso: área de parqueo estándar del arco. El Discovery GE se posiciona aquí cuando no está en uso para evitar colisiones con personal, mesa o equipos. No transitar por esta zona durante procedimiento.",
+                        tags: ["Seguridad", "Parqueo", "Anti-colisión"]
+                    },
+                    {
+                        yaw: 15, pitch: -5,
+                        title: "🛡️ Mamparas de Plomo Colgadas",
+                        text: "Mamparas de plomo suspendidas del techo. Se desplazan lateralmente según posición del arco. Proporcionan blindaje adicional al personal de sala durante fluoroscopia. Complementan el blindaje móvil personal.",
+                        tags: ["ALARA", "Mamparas", "Protección"]
+                    },
+                    {
+                        yaw: 30, pitch: -8,
+                        type: "nav",
+                        title: "→ Sala de Comando",
+                        text: "Navegar a sala de comando",
+                        targetScene: 2,
+                        cssClass: "nav-arrow-hotspot"
+                    },
+                    {
+                        yaw: -30, pitch: -8,
+                        type: "nav",
+                        title: "← Volver a Entrada",
+                        text: "Regresar a entrada",
+                        targetScene: 0,
+                        cssClass: "nav-arrow-hotspot"
+                    }
+                ]
+            },
+            {
+                name: "Sala de Comando - Principal",
+                panorama: "images/03_comando.jpg",
+                yaw: 0,
+                pitch: 0,
+                hfov: 100,
+                hotspots: [
+                    {
+                        yaw: 0, pitch: -5,
+                        title: "🪟 Ventana a Sala",
+                        text: "Vista directa al Discovery GE y mesa angiográfica. Desde aquí el tecnólogo controla el estudio sin exposición a radiación. Comunicación bidireccional con médico intervencionista y enfermería de sala.",
+                        tags: ["Control", "Protección", "Comunicación"]
+                    },
+                    {
+                        yaw: -30, pitch: -8,
+                        title: "📊 2 Monitores de Adquisición",
+                        text: "Monitor izquierdo: imagen en tiempo real, parámetros técnicos (kV, mA, DAP). Monitor derecho: fluoroscopia continua, guía de catéter. Control de calidad de imagen en vivo durante todo el procedimiento.",
+                        tags: ["Adquisición", "Técnica", "Dosis"]
+                    },
+                    {
+                        yaw: 20, pitch: -8,
+                        title: "🔧 2 Monitores de Postproceso",
+                        text: "Monitor izquierdo: medición cuantitativa (stenosis, regurgitación, fracción de eyección). Monitor derecho: análisis de cuantificación coronaria (QCA), generación de reporte estructurado para PACS/RIS.",
+                        tags: ["Postproceso", "Medición", "Reporte"]
+                    },
+                    {
+                        yaw: -10, pitch: -8,
+                        title: "🎮 Panel de Control Remoto",
+                        text: "Control remoto del Discovery GE: ángulos del arco, mesa (subir/bajar, trendelemburg, lateral), collimador, magnificación, grabación cine/fluoroscopia. Acceso a protocolos predefinidos por tipo de estudio.",
+                        tags: ["Control", "Discovery GE", "Protocolos"]
+                    },
+                    {
+                        yaw: 40, pitch: -8,
+                        type: "nav",
+                        title: "→ Comando Lateral",
+                        text: "Navegar a vista lateral de comando",
+                        targetScene: 3,
+                        cssClass: "nav-arrow-hotspot"
+                    },
+                    {
+                        yaw: -40, pitch: -8,
+                        type: "nav",
+                        title: "← Volver a Discovery + Mesa",
+                        text: "Regresar a sala",
+                        targetScene: 1,
+                        cssClass: "nav-arrow-hotspot"
+                    }
+                ]
+            },
+            {
+                name: "Sala de Comando - Lateral",
+                panorama: "images/04_comando_lateral.jpg",
+                yaw: 0,
+                pitch: 0,
+                hfov: 100,
+                hotspots: [
+                    {
+                        yaw: -20, pitch: -5,
+                        title: "📺 Mismos Monitores de Comando",
+                        text: "Misma estación de comando: vista lateral que muestra la distribución completa de los 4 monitores médicos. Desde este ángulo se aprecia mejor la curva del escritorio ergonómico y la disposición de los teclados.",
+                        tags: ["Comando", "Ergonomía", "Monitores"]
+                    },
+                    {
+                        yaw: 30, pitch: -8,
+                        title: "📿 Dosímetros Personales",
+                        text: "Control de dosis acumulada por personal. Verificar lectura antes y después del turno. Límite anual: 20 mSv (cuerpo entero). Si excede: notificar inmediatamente al jefe de protección radiológica del hospital.",
+                        tags: ["Dosimetría", "ALARA", "Legal"]
+                    },
+                    {
+                        yaw: -50, pitch: -5,
+                        title: "🦺 Perchero de Mandiles Plomados",
+                        text: "Mandiles de plomo 0.5mm Pb equivalente. Verificar integridad antes de cada uso: no grietas, desgastes, roturas. Tallas S, M, L, XL disponibles. Colgar después de uso. No doblar ni dejar en el piso.",
+                        tags: ["ALARA", "Protección", "Mantenimiento"]
+                    },
+                    {
+                        yaw: 50, pitch: -8,
+                        type: "nav",
+                        title: "→ Protección Radiológica",
+                        text: "Navegar a cuarto de protección",
+                        targetScene: 4,
+                        cssClass: "nav-arrow-hotspot"
+                    },
+                    {
+                        yaw: -30, pitch: -8,
+                        type: "nav",
+                        title: "← Volver a Comando Principal",
+                        text: "Regresar a vista principal",
+                        targetScene: 2,
+                        cssClass: "nav-arrow-hotspot"
+                    }
+                ]
+            },
+            {
+                name: "Protección Radiológica",
+                panorama: "images/05_proteccion.jpg",
+                yaw: 0,
+                pitch: 0,
+                hfov: 100,
+                hotspots: [
+                    {
+                        yaw: -30, pitch: -5,
+                        title: "☢️ Zona de Protección Radiológica",
+                        text: "Área de control y almacenamiento de elementos de protección radiológica. Acceso restringido a personal autorizado. Cumplimiento de normativa IRAM-ISO 361 y CNEA. Inventario mensual obligatorio.",
+                        tags: ["Normativa", "Seguridad", "Obligatorio"]
+                    },
+                    {
+                        yaw: 20, pitch: -8,
+                        title: "🦺 Mandiles de Plomo",
+                        text: "Mandiles de plomo 0.5mm Pb equivalente (azul oscuro, naranja, azul claro). Verificar integridad: no grietas, desgastes, roturas. Tallas S, M, L, XL. Colgar después de uso. No doblar. Control de peso: mandil > 5kg debe revisarse.",
+                        tags: ["ALARA", "Protección", "Mantenimiento"]
+                    },
+                    {
+                        yaw: 50, pitch: -5,
+                        title: "👓 Gafas y Collarines",
+                        text: "Gafas de plomo con lateral completo (0.5mm Pb). Collarines tiroideos (0.5mm Pb). Uso obligatorio durante fluoroscopia. Verificar que no estén rayadas ni opacas. Limpieza con alcohol después de cada uso.",
+                        tags: ["ALARA", "Obligatorio", "Protección"]
+                    },
+                    {
+                        yaw: -60, pitch: -8,
+                        title: "🔧 Accesorios de Protección",
+                        text: "Guantes de plomo (opcional para manos cerca del campo), protectores gonadales (pediátrico), blindaje móvil de pie, escudos de ventana para sala de comando. Inventario completo mensual.",
+                        tags: ["Accesorios", "Inventario", "ALARA"]
+                    },
+                    {
+                        yaw: -40, pitch: -8,
+                        type: "nav",
+                        title: "← Volver a Comando Lateral",
+                        text: "Regresar a sala de comando",
+                        targetScene: 3,
+                        cssClass: "nav-arrow-hotspot"
+                    }
+                ]
+            }
+        ];
+
+        let currentScene = 0;
+        let viewer;
+
+        function initViewer() {
+            viewer = pannellum.viewer('panorama', {
+                default: {
+                    firstScene: "scene0",
+                    sceneFadeDuration: 1000,
+                    autoLoad: true
+                },
+                scenes: {}
+            });
+
+            scenes.forEach((scene, index) => {
+                const hotspots = scene.hotspots.map(h => {
+                    if (h.type === "nav") {
+                        return {
+                            type: "custom",
+                            pitch: h.pitch,
+                            yaw: h.yaw,
+                            cssClass: h.cssClass || "nav-arrow-hotspot",
+                            createTooltipFunc: hotspotTooltip,
+                            createTooltipArgs: { title: h.title, text: h.text },
+                            clickHandlerFunc: navigateToScene,
+                            clickHandlerArgs: { sceneIndex: h.targetScene }
+                        };
+                    }
+                    return {
+                        type: "custom",
+                        pitch: h.pitch,
+                        yaw: h.yaw,
+                        cssClass: "custom-hotspot",
+                        createTooltipFunc: hotspotTooltip,
+                        createTooltipArgs: { title: h.title, text: h.text, tags: h.tags },
+                        clickHandlerFunc: showInfo,
+                        clickHandlerArgs: { title: h.title, text: h.text, tags: h.tags }
+                    };
+                });
+
+                viewer.addScene("scene" + index, {
+                    title: scene.name,
+                    panorama: scene.panorama,
+                    yaw: scene.yaw,
+                    pitch: scene.pitch,
+                    hfov: scene.hfov,
+                    hotSpots: hotspots
+                });
+            });
+
+            updateUI();
+        }
+
+        function hotspotTooltip(hotSpotDiv, args) {
+            hotSpotDiv.classList.add('custom-hotspot');
+            hotSpotDiv.innerHTML = args.title.startsWith('→') || args.title.startsWith('←') ? args.title.charAt(0) : '?';
+            hotSpotDiv.setAttribute('title', args.title);
+        }
+
+        function showInfo(hotSpot, args) {
+            document.getElementById('infoTitle').innerHTML = args.title;
+            document.getElementById('infoText').textContent = args.text;
+
+            const tagsDiv = document.getElementById('infoTags');
+            tagsDiv.innerHTML = '';
+            if (args.tags) {
+                args.tags.forEach(tag => {
+                    const span = document.createElement('span');
+                    span.className = 'tag';
+                    span.textContent = tag;
+                    tagsDiv.appendChild(span);
+                });
+            }
+
+            document.getElementById('infoOverlay').classList.add('active');
+        }
+
+        function navigateToScene(hotSpot, args) {
+            loadScene(args.sceneIndex);
+        }
+
+        function closeInfo() {
+            document.getElementById('infoOverlay').classList.remove('active');
+        }
+
+        function loadScene(index) {
+            if (index < 0 || index >= scenes.length) return;
+            currentScene = index;
+            viewer.loadScene("scene" + index);
+            updateUI();
+        }
+
+        function nextScene() {
+            loadScene((currentScene + 1) % scenes.length);
+        }
+
+        function prevScene() {
+            loadScene((currentScene - 1 + scenes.length) % scenes.length);
+        }
+
+        function updateUI() {
+            document.getElementById('sceneName').textContent = scenes[currentScene].name;
+
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentScene);
+            });
+
+            document.querySelectorAll('.scene-item').forEach((item, i) => {
+                item.classList.toggle('active', i === currentScene);
+            });
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeInfo();
+            if (e.key === 'ArrowRight') nextScene();
+            if (e.key === 'ArrowLeft') prevScene();
+        });
+
+        initViewer();
+    </script>
+</body>
+</html>
