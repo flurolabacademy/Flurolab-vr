@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flurolab VR - Laboratorios de Hemodinamia</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0e17;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        .header p {
+            color: #8899aa;
+            font-size: 1.1rem;
+            max-width: 500px;
+        }
+
+        .labs-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+        }
+
+        .lab-card {
+            background: rgba(20, 28, 40, 0.9);
+            border: 1px solid #1a2332;
+            border-radius: 16px;
+            padding: 30px;
+            width: 380px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            color: #fff;
+        }
+        .lab-card:hover {
+            border-color: #00d4ff;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .lab-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        .lab-card h2 {
+            color: #00d4ff;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .lab-card .subtitle {
+            color: #8899aa;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .lab-card .description {
+            color: #b0c4de;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .lab-card .stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat {
+            background: #00d4ff22;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #00d4ff;
+        }
+        .lab-card .btn {
+            display: inline-block;
+            background: #00d4ff;
+            color: #0a0e17;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        .lab-card:hover .btn {
+            background: #fff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .footer {
+            margin-top: 50px;
+            color: #556677;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+        .footer a { color: #00d4ff; text-decoration: none; }
+
+        @media (max-width: 800px) {
+            .labs-container { flex-direction: column; align-items: center; }
+            .lab-card { width: 100%; max-width: 380px; }
+            .header h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏥 Flurolab VR</h1>
+        <p>Simulador interactivo 360° de salas de hemodinamia para tecnólogos médicos</p>
+    </div>
+
+    <div class="labs-container">
+        <a href="discovery/" class="lab-card">
+            <div class="lab-icon">⚡</div>
+            <h2>Laboratorio Discovery</h2>
+            <div class="subtitle">Angiografo Discovery GE</div>
+            <div class="description">
+                Recorrido completo por sala de hemodinamia con equipo Discovery GE de piso. 
+                Incluye zona de anestesia, mesa angiográfica, sala de comando y protección radiológica.
+            </div>
+            <div class="stats">
+                <span class="stat">5 escenas</span>
+                <span class="stat">26 hotspots</span>
+            </div>
+            <div class="btn">Entrar al Laboratorio →</div>
+        </a>
+
+        <a href="allura/" class="lab-card">
+            <div class="lab-icon">🔷</div>
+            <h2>Laboratorio Allura</h2>
+            <div class="subtitle">Angiografo Allura Philips</div>
+            <div class="description">
+                Simulación de sala de cardiología intervencionista con Allura Philips. 
+                Incluye mesa angiográfica, monitores colgantes, sala de comando y cuarto técnico.
+            </div>
+            <div class="stats">
+                <span class="stat">4 escenas</span>
+                <span class="stat">23 hotspots</span>
+            </div>
+            <div class="btn">Entrar al Laboratorio →</div>
+        </a>
+    </div>
+
+    <div class="footer">
+        <p>Flurolab Academy © 2026 | Desarrollado por <a href="#">Flurolab</a></p>
+        <p>Tecnólogo médico especializado en radiología intervencionista</p>
+    </div>
+</body>
+</html>
